@@ -11,7 +11,7 @@ status = "online"  # online/dnd/idle
 
 GUILD_ID = 1112644273725259807
 CHANNEL_ID = 1112655603102396436
-SELF_MUTE = True
+SELF_MUTE = False
 SELF_DEAF = False
 
 usertokens = [
@@ -40,37 +40,71 @@ def joiner(token, status):
     ws = websocket.WebSocket()
     ws.connect('wss://gateway.discord.gg/?v=9&encoding=json')
     start = json.loads(ws.recv())
-    heartbeat = start['d']['heartbeat_interval']
-    auth = {
-        "op": 2,
-        "d": {
-            "token": token,
-            "properties": {
-                "$os": "Windows 10",
-                "$browser": "Google Chrome",
-                "$device": "Windows"
-            },
-            "presence": {
-                "status": status,
-                "afk": False
-            }
-        },
-        "s": None,
-        "t": None
-    }
-    vc = {
-        "op": 4,
-        "d": {
-            "guild_id": GUILD_ID,
-            "channel_id": CHANNEL_ID,
-            "self_mute": SELF_MUTE,
-            "self_deaf": SELF_DEAF
+    heartbeat_interval = start['d']['heartbeat_interval'] / 1000
+    session_id = None
+    sequence = None
+
+    while True:
+        if ws.connected:
+            data = json.loads(ws.recv())
+            op = data['op']
+            if op == 10:
+                heartbeat_interval = data['d']['heartbeat_interval'] / 1000
+                heartbeat_thread = Thread(target=send_heartbeat, args=(ws,))
+                heartbeat_thread.start()
+                identify_payload = {
+                    "op": 2,
+                    "d": {
+                        "token": token,
+                        "properties": {
+                            "$os": "Windows 10",
+                            "$browser": "Google Chrome",
+                            "$device": "Windows"
+                        },
+                        "presence": {
+                            "status": status,
+                            "afk": False
+                        }
+                    }
+                }
+                ws.send(json.dumps(identify_payload))
+            elif op == 11:
+                print("Received heartbeat ACK")
+            elif op == 9:
+                print("Received invalid session, reconnecting...")
+                time.sleep(5)
+                joiner(token, status)
+                break
+            elif op == 0:
+                sequence = data['s']
+                if data['t'] == 'READY':
+                    session_id = data['d']['session_id']
+                if data['t'] == 'VOICE_SERVER_UPDATE':
+                    voice_payload = {
+                        "op": 4,
+                        "d": {
+                            "guild_id": GUILD_ID,
+                            "channel_id": CHANNEL_ID,
+                            "self_mute": SELF_MUTE,
+                            "self_deaf": SELF_DEAF
+                        }
+                    }
+                    ws.send(json.dumps(voice_payload))
+
+        else:
+            print("Disconnected, reconnecting...")
+            time.sleep(5)
+            joiner(token, status)
+            break
+
+def send_heartbeat(ws):
+    while ws.connected:
+        heartbeat_payload = {
+            "op": 1,
+            "d": None
         }
-    }
-    ws.send(json.dumps(auth))
-    ws.send(json.dumps(vc))
-    time.sleep(heartbeat / 1000)
-    ws.send(json.dumps({"op": 1, "d": None}))
+        ws.send(json.dumps(heartbeat_payload))
+        time.sleep(heartbeat_interval)
 
 def connect_tokens():
     threads = []
