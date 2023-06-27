@@ -59,9 +59,11 @@ def joiner(token, status):
         }
     }
     ws.send(json.dumps(auth))
-    ws.send(json.dumps(vc))
     time.sleep(heartbeat / 1000)
-    ws.send(json.dumps({"op": 1, "d": None}))
+    ws.send(json.dumps(vc))
+    while True:
+        time.sleep(heartbeat / 1000)
+        ws.send(json.dumps({"op": 1, "d": None}))
 
 def run_joiner():
     os.system("clear")
