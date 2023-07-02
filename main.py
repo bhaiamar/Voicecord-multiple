@@ -8,13 +8,15 @@ from keep_alive import keep_alive
 
 status = "online" #online/dnd/idle
 
-GUILD_ID = 1112644273725259807
-CHANNEL_ID = 1112655603102396436
+GUILD_ID = 1029698252632752198
+CHANNEL_ID = 1053585168797024286
 SELF_MUTE = True
 SELF_DEAF = False
 
 # Add your tokens here as a list of strings
-usertokens = [os.getenv("TOKEN1"), os.getenv("TOKEN2"), os.getenv("TOKEN3")]
+usertokens = [os.getenv("MTExNDgwNDg2MTMzOTQ0MzIwMQ.GxWlUg.kVXaaUdZ4IziECOCbkDgB_TdfzEl5jFTD9eDtI"), os.getenv("MTExNDgwMjk5MTIyNTExMDYxOA.GzaMfO.6tca-rNUQnHrrXGEEtM-4feO6p4lf1ctJZe-MY
+"), os.getenv("MTExNDgwMTk4OTg0NzYyOTkyNQ.GMVuw2.H0N0CXAtVWUkFtrTNwIbqlwlVxgP_d3Sc-PLJM
+")]
 
 for usertoken in usertokens:
     if not usertoken:
